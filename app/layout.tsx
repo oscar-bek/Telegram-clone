@@ -1,3 +1,4 @@
+import { ThemeProvider } from '@/components/providers/theme.provider'
 import './globals.css'
 
 import type { Metadata } from 'next'
@@ -11,7 +12,7 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
 	title: 'Telegram web',
-	description: 'Telegram web application clone created by Sammi.ac',
+	description: 'Telegram web application clone created by Beggi.ac',
 	icons: { icon: '/logo.svg' },
 }
 
@@ -22,8 +23,11 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang='en' suppressHydrationWarning>
-			<body className={`${spaceGrotesk.variable} antialiased`} suppressHydrationWarning>
+		<body className={`${spaceGrotesk.variable} antialiased`} suppressHydrationWarning>
 				{children}
+				<ThemeProvider attribute='class' defaultTheme='system' enableSystem disableTransitionOnChange>
+					{children}
+				</ThemeProvider>
 			</body>
 		</html>
 	)
