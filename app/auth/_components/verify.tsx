@@ -3,40 +3,21 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '@/component
 import { Input } from '@/components/ui/input'
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from '@/components/ui/input-otp'
 import { Label } from '@/components/ui/label'
-import { useAuth } from '@/hooks/use-auth'
-import { toast } from '@/hooks/use-toast'
-import { axiosClient } from '@/http/axios'
 import { otpSchema } from '@/lib/validation'
-import { IUser } from '@/types'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation } from '@tanstack/react-query'
 import { REGEXP_ONLY_DIGITS } from 'input-otp'
 import React from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { signIn } from 'next-auth/react'
 
 const Verify = () => {
-	const { email } = useAuth()
-
 	const form = useForm<z.infer<typeof otpSchema>>({
 		resolver: zodResolver(otpSchema),
-		defaultValues: { email, otp: '	' },
-	})
-
-	const { mutate, isPending } = useMutation({
-		mutationFn: async (otp: string) => {
-			const { data } = await axiosClient.post<{ user: IUser }>('/api/auth/verify', { email, otp })
-			return data
-		},
-		onSuccess: ({ user }) => {
-			signIn('credentials', { email: user.email, callbackUrl: '/' })
-			toast({ description: 'Successfully verified' })
-		},
+		defaultValues: { email: '', otp: '	' },
 	})
 
 	function onSubmit(values: z.infer<typeof otpSchema>) {
-		mutate(values.otp)
+		console.log(values)
 	}
 
 	return (
@@ -53,7 +34,7 @@ const Verify = () => {
 							<FormItem>
 								<Label>Email</Label>
 								<FormControl>
-									<Input placeholder='info@sammi.ac' disabled className='h-10 bg-secondary' {...field} />
+									<Input placeholder='info@sammi.ac' className='h-10 bg-secondary' {...field} />
 								</FormControl>
 								<FormMessage className='text-xs text-red-500' />
 							</FormItem>
@@ -66,7 +47,7 @@ const Verify = () => {
 							<FormItem>
 								<Label>One-Time Password</Label>
 								<FormControl>
-									<InputOTP maxLength={6} className='w-full' pattern={REGEXP_ONLY_DIGITS} disabled={isPending} {...field}>
+									<InputOTP maxLength={6} className='w-full' pattern={REGEXP_ONLY_DIGITS} {...field}>
 										<InputOTPGroup className='w-full '>
 											<InputOTPSlot index={0} className='w-full dark:bg-primary-foreground bg-secondary' />
 											<InputOTPSlot index={1} className='w-full dark:bg-primary-foreground bg-secondary' />
@@ -85,7 +66,7 @@ const Verify = () => {
 						)}
 					/>
 
-					<Button type='submit' className='w-full' size={'lg'} disabled={isPending}>
+					<Button type='submit' className='w-full' size={'lg'}>
 						Submit
 					</Button>
 				</form>
