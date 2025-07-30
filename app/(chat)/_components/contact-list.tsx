@@ -6,11 +6,12 @@ import Settings from './settings'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useRouter } from 'next/navigation'
-import useCurrentContact from '@/hooks/use-current'
+import { useCurrentContact } from '@/hooks/use-current'
 import { cn } from '@/lib/utils'
 
-interface Props {	contacts: IUser[]}
-
+interface Props {
+	contacts: IUser[]
+}
 const ContactList: FC<Props> = ({ contacts }) => {
 	const router = useRouter()
 	const { setCurrentContact, currentContact } = useCurrentContact()
