@@ -27,7 +27,6 @@ export default function RootLayout({
         className={`${spaceGrotesk.variable} antialiased`}
         suppressHydrationWarning
       >
-        {children}
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
