@@ -28,7 +28,7 @@ const AddContact: FC<Props> = ({ contactForm, onCreateContact }) => {
 									<FormItem>
 										<Label>Email</Label>
 										<FormControl>
-											<Input placeholder='info@sammi.ac' className='h-10 bg-secondary' {...field} />
+											<Input placeholder='info@beggi.ac' className='h-10 bg-secondary' {...field} />
 										</FormControl>
 										<FormMessage className='text-xs text-red-500' />
 									</FormItem>
