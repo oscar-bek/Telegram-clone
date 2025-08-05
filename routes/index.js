@@ -1,4 +1,5 @@
 const authController = require("../controllers/auth.controller");
+const userController = require("../controllers/user.controller");
 
 const router = require("express").Router();
 
@@ -6,9 +7,8 @@ const router = require("express").Router();
 router.post("/auth/login", authController.login);
 router.post("/auth/verify", authController.verify);
 
-// User routes
-router.get("/user/contacts", (req, res) => {
-  res.json({ contacts: [] });
-});
+router.get("/user/messages/:contactId", userController.getMessages);
+
+router.post("/user/create-message", userController.createMessage);
 
 module.exports = router;
