@@ -1,36 +1,16 @@
-require("dotenv").config();
+require('dotenv').config()
 
-const express = require("express");
-const cookieParser = require("cookie-parser");
-const cors = require("cors");
+const express = require('express')
+const cookieParser = require('cookie-parser')
 const { default: mongoose } = require('mongoose')
 const errorMiddleware = require('./middlewares/error.middleware')
-const app = express();
+
+const app = express()
 
 // Middleware
-app.use(express.json());
-app.use(cookieParser());
-app.use(
-  cors({
-    origin: "http://localhost:3000", // Frontend URL
-    credentials: true,
-  })
-);
+app.use(express.json())
 
-// Root route
-app.get("/", (req, res) => {
-  res.json({
-    message: "Telegram Clone Server is running!",
-    status: "OK",
-    endpoints: {
-      auth: "/api/auth/login, /api/auth/verify",
-      user: "/api/user/contacts",
-    },
-  });
-});
-
-app.use("/api", require("./routes/index"));
-
+app.use('/api', require('./routes/index'))
 
 app.use(errorMiddleware)
 
