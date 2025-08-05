@@ -5,7 +5,7 @@ class UserController {
 	// [GET]
 	async getMessages(req, res, next) {
 		try {
-			const user = '672eff8a01fdd82ec1969f97'
+			const user = '689176f4b94f39c4700e27d6'
 			const { contactId } = req.params
 
 			const messages = await messageModel
