@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { toast } from '@/hooks/use-toast'
 import { axiosClient } from '@/http/axios'
 import { otpSchema } from '@/lib/validation'
-import { IError, IUser } from '@/types'
+import { IUser } from '@/types'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
 import { REGEXP_ONLY_DIGITS } from 'input-otp'
@@ -32,13 +32,7 @@ const Verify = () => {
 		onSuccess: ({ user }) => {
 			signIn('credentials', { email: user.email, callbackUrl: '/' })
 			toast({ description: 'Successfully verified' })
-		},
-		onError: (error: IError) => {
-			if (error.response?.data?.message) {
-				return toast({ description: error.response.data.message, variant: 'destructive' })
-			}
-			return toast({ description: 'Something went wrong', variant: 'destructive' })
-		},
+		}
 	})
 
 	function onSubmit(values: z.infer<typeof otpSchema>) {
@@ -59,7 +53,7 @@ const Verify = () => {
 							<FormItem>
 								<Label>Email</Label>
 								<FormControl>
-									<Input placeholder='info@sammi.ac' disabled className='h-10 bg-secondary' {...field} />
+									<Input placeholder='info@beggi.ac' disabled className='h-10 bg-secondary' {...field} />
 								</FormControl>
 								<FormMessage className='text-xs text-red-500' />
 							</FormItem>
