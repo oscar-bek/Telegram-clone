@@ -9,8 +9,6 @@ const StateAuth = () => {
 
 	return (
 		<>
-			{/* <SignIn /> */}
-			<Verify />
 			{step === 'login' && <SignIn />}
 			{step === 'verify' && <Verify />}
 		</>
