@@ -6,14 +6,17 @@ import Settings from "./settings";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
-import { useCurrentContact } from "@/hooks/use-current";
 import { cn } from "@/lib/utils";
+import { useCurrentContact } from "@/hooks/use-current";
+import { useAuth } from "@/hooks/use-auth";
 
 interface Props {
   contacts: IUser[];
 }
 const ContactList: FC<Props> = ({ contacts }) => {
   const [query, setQuery] = useState("");
+
+  const { onlineUsers } = useAuth();
   const router = useRouter();
   const { setCurrentContact, currentContact } = useCurrentContact();
 
@@ -24,7 +27,6 @@ const ContactList: FC<Props> = ({ contacts }) => {
   const renderContact = (contact: IUser) => {
     const onChat = () => {
       if (currentContact?._id === contact._id) return;
-      console.log("chatting with", contact.email);
       setCurrentContact(contact);
       router.push(`/?chat=${contact._id}`);
     };
@@ -49,7 +51,10 @@ const ContactList: FC<Props> = ({ contacts }) => {
                 {contact.email[0]}
               </AvatarFallback>
             </Avatar>
-            <div className="size-3 bg-green-500 absolute rounded-full bottom-0 right-0 !z-50" />
+
+            {onlineUsers.some((user) => user._id === contact._id) && (
+              <div className="size-3 bg-green-500 absolute rounded-full bottom-0 right-0 !z-50" />
+            )}
           </div>
 
           <div>
@@ -85,7 +90,6 @@ const ContactList: FC<Props> = ({ contacts }) => {
         </div>
       </div>
 
-      {/* Contacts */}
       {filteredContacts.length === 0 ? (
         <div className="w-full h-[95vh] flex justify-center items-center text-center text-muted-foreground">
           <p>Contact list is empty</p>
@@ -95,7 +99,6 @@ const ContactList: FC<Props> = ({ contacts }) => {
           <div key={contact._id}>{renderContact(contact)}</div>
         ))
       )}
-
     </>
   );
 };
