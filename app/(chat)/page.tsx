@@ -3,7 +3,6 @@
 import { Loader2 } from "lucide-react";
 import ContactList from "./_components/contact-list";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import AddContact from "./_components/add-contact";
 import { useCurrentContact } from "@/hooks/use-current";
 import { useForm } from "react-hook-form";
@@ -35,11 +34,7 @@ const HomePage = () => {
   const { setOnlineUsers } = useAuth();
   const { playSound } = useAudio();
 
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const socket = useRef<ReturnType<typeof io> | null>(null);
-
-  const CONTACT_ID = searchParams.get("chat");
 
   const contactForm = useForm<z.infer<typeof emailSchema>>({
     resolver: zodResolver(emailSchema),
@@ -79,15 +74,7 @@ const HomePage = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
-      setMessages((prev) => {
-        const merged = [...prev, ...data.messages];
-        const unique = merged.filter(
-          (m, i, arr) => i === arr.findIndex((x) => x._id === m._id)
-        );
-        return unique;
-      });
-
+      setMessages(data.messages);
       setContacts((prev) =>
         prev.map((item) =>
           item._id === currentContact?._id
@@ -100,8 +87,7 @@ const HomePage = () => {
             : item
         )
       );
-    } catch (error) {
-      console.error("Xabarlarni olishda xatolik:", error);
+    } catch {
       toast({ description: "Cannot fetch messages", variant: "destructive" });
     } finally {
       setLoadMessages(false);
@@ -109,7 +95,6 @@ const HomePage = () => {
   };
 
   useEffect(() => {
-    router.replace("/");
     socket.current = io("ws://localhost:5000");
   }, []);
 
@@ -138,14 +123,10 @@ const HomePage = () => {
       socket.current?.on(
         "getNewMessage",
         ({ newMessage, sender, receiver }: GetSocketType) => {
-          console.log(newMessage);
-          console.log("CONTACT_ID", CONTACT_ID);
-
-          setTyping("");
-          if (CONTACT_ID === sender._id) {
+          setTyping({ message: "", sender: null });
+          if (currentContact?._id === newMessage.sender._id) {
             setMessages((prev) => [...prev, newMessage]);
           }
-
           setContacts((prev) => {
             return prev.map((contact) => {
               if (contact._id === sender._id) {
@@ -154,7 +135,7 @@ const HomePage = () => {
                   lastMessage: {
                     ...newMessage,
                     status:
-                      CONTACT_ID === sender._id
+                      currentContact?._id === sender._id
                         ? CONST.READ
                         : newMessage.status,
                   },
@@ -163,35 +144,25 @@ const HomePage = () => {
               return contact;
             });
           });
-          // toast({
-          //   title: "New message",
-          //   description: `${sender?.email.split("@")[0]} sent you a message`,
-          // });
           if (!receiver.muted) {
             playSound(receiver.notificationSound);
           }
         }
       );
 
-      socket.current?.on("getReadMessages", (readMessages: IMessage[]) => {
+      socket.current?.on("getReadMessages", (messages: IMessage[]) => {
         setMessages((prev) => {
-          const updatedMessages = prev.map((item) => {
-            const readMessage = readMessages.find(
-              (msg) => msg._id === item._id
-            );
-            if (readMessage) {
-              return { ...item, status: CONST.READ };
-            }
-            return item;
+          return prev.map((item) => {
+            const message = messages.find((msg) => msg._id === item._id);
+            return message ? { ...item, status: CONST.READ } : item;
           });
-          return updatedMessages;
         });
       });
 
       socket.current?.on(
         "getUpdatedMessage",
         ({ updatedMessage, sender }: GetSocketType) => {
-          setTyping('')
+          setTyping({ message: "", sender: null });
           setMessages((prev) =>
             prev.map((item) =>
               item._id === updatedMessage._id
@@ -219,12 +190,6 @@ const HomePage = () => {
         }
       );
 
-      socket.current?.on('getTyping', ({ message, sender }: GetSocketType) => {
-				if (CONTACT_ID === sender._id) {
-					setTyping(message)
-				}
-			})
-
       socket.current?.on(
         "getDeletedMessage",
         ({ deletedMessage, sender, filteredMessages }: GetSocketType) => {
@@ -249,18 +214,20 @@ const HomePage = () => {
           );
         }
       );
+
+      socket.current?.on("getTyping", ({ message, sender }: GetSocketType) => {
+        if (currentContact?._id === sender._id) {
+          setTyping({ message, sender });
+        }
+      });
     }
-  }, [session?.currentUser, socket, CONTACT_ID]);
+  }, [session?.currentUser, currentContact?._id]);
 
   useEffect(() => {
     if (currentContact?._id) {
       getMessages();
     }
   }, [currentContact]);
-
-  const onTyping = (e: ChangeEvent<HTMLInputElement>) => {
-		socket.current?.emit('typing', { receiver: currentContact, sender: session?.currentUser, message: e.target.value })
-	}
 
   const onCreateContact = async (values: z.infer<typeof emailSchema>) => {
     setCreating(true);
@@ -314,11 +281,7 @@ const HomePage = () => {
         { ...values, receiver: currentContact?._id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setMessages((prev) => {
-        const exists = prev.some((item) => item._id === data.newMessage._id);
-        return exists ? prev : [...prev, data.newMessage];
-      });
-
+      setMessages((prev) => [...prev, data.newMessage]);
       setContacts((prev) =>
         prev.map((item) =>
           item._id === currentContact?._id
@@ -335,6 +298,9 @@ const HomePage = () => {
         receiver: data.receiver,
         sender: data.sender,
       });
+      if (!data.sender.muted) {
+        playSound(data.sender.sendingSound);
+      }
     } catch {
       toast({ description: "Cannot send message", variant: "destructive" });
     } finally {
@@ -388,7 +354,6 @@ const HomePage = () => {
       .filter((message) => message.status !== CONST.READ);
 
     if (receivedMessages.length === 0) return;
-
     const token = await generateToken(session?.currentUser?._id);
     try {
       const { data } = await axiosClient.post<{ messages: IMessage[] }>(
@@ -396,23 +361,17 @@ const HomePage = () => {
         { messages: receivedMessages },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      // Show message if sending to Socket
-      const socketData = {
+      socket.current?.emit("readMessages", {
         messages: data.messages,
-        receiver: currentContact, // This is the receiver (A user)
-      };
-
-      socket.current?.emit("readMessages", socketData);
-
+        receiver: currentContact,
+      });
       setMessages((prev) => {
         return prev.map((item) => {
           const message = data.messages.find((msg) => msg._id === item._id);
           return message ? { ...item, status: CONST.READ } : item;
         });
       });
-    } catch (error) {
-      console.error("onReadMessages xatolik:", error);
+    } catch {
       toast({ description: "Cannot read messages", variant: "destructive" });
     }
   };
@@ -482,9 +441,17 @@ const HomePage = () => {
     }
   };
 
+  const onTyping = (e: ChangeEvent<HTMLInputElement>) => {
+    socket.current?.emit("typing", {
+      receiver: currentContact,
+      sender: session?.currentUser,
+      message: e.target.value,
+    });
+  };
+
   return (
     <>
-      <div className="w-80 h-screen border-r fixed inset-0 z-50 sidebar-custom-scrollbar overflow-y-scroll">
+      <div className="w-80 max-md:w-16 h-screen border-r fixed inset-0 z-50">
         {isLoading && (
           <div className="w-full h-[95vh] flex justify-center items-center">
             <Loader2 size={50} className="animate-spin" />
@@ -493,7 +460,7 @@ const HomePage = () => {
 
         {!isLoading && <ContactList contacts={contacts} />}
       </div>
-      <div className="pl-80 w-full">
+      <div className="max-md:pl-16 pl-80 w-full">
         {!currentContact?._id && (
           <AddContact
             contactForm={contactForm}

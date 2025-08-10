@@ -24,11 +24,11 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
-import { toast } from '@/hooks/use-toast'
-import { axiosClient } from '@/http/axios'
-import { generateToken } from '@/lib/generate-token'
-import { UploadButton } from '@/lib/uploadthing'
-import { useMutation } from '@tanstack/react-query'
+import { toast } from "@/hooks/use-toast";
+import { axiosClient } from "@/http/axios";
+import { generateToken } from "@/lib/generate-token";
+import { UploadButton } from "@/lib/uploadthing";
+import { useMutation } from "@tanstack/react-query";
 import {
   LogIn,
   Menu,
@@ -39,39 +39,41 @@ import {
   UserPlus,
   VolumeOff,
 } from "lucide-react";
-import { signOut, useSession } from 'next-auth/react'
+import { signOut, useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 
 const Settings = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { resolvedTheme, setTheme } = useTheme();
- const { data: session, update } = useSession()
+  const { data: session, update } = useSession();
 
-	const { mutate, isPending } = useMutation({
-	mutationFn: async (payload: IPayload) => {
-			const token = await generateToken(session?.currentUser?._id)
-			const { data } = await axiosClient.put('/api/user/profile', payload, { headers: { Authorization: `Bearer ${token}` } })
-			return data
-		},
-		onSuccess: () => {
-			toast({ description: 'Profile updated successfully' })
-			update()
-		},
-	})
+  const { mutate, isPending } = useMutation({
+    mutationFn: async (payload: IPayload) => {
+      const token = await generateToken(session?.currentUser?._id);
+      const { data } = await axiosClient.put("/api/user/profile", payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return data;
+    },
+    onSuccess: () => {
+      toast({ description: "Profile updated successfully" });
+      update();
+    },
+  });
 
   return (
     <>
       <Popover>
         <PopoverTrigger asChild>
-          <Button size={"icon"} variant={"secondary"}>
+          <Button size={"icon"} variant={"secondary"} className="max-md:w-full">
             <Menu />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="p-0 w-80">
-         <h2 className='pt-2 pl-2 text-muted-foreground text-sm'>
-            Settings: <span className='text-white'>{session?.user?.email}</span>
-					</h2>
+          <h2 className="pt-2 pl-2 text-muted-foreground text-sm">
+            Settings: <span className="text-white">{session?.user?.email}</span>
+          </h2>
           <div className="my-2">
             <Separator />
           </div>
@@ -86,10 +88,10 @@ const Settings = () => {
               </div>
             </div>
 
-           <div
-							className='flex justify-between items-center p-2 hover:bg-secondary cursor-pointer'
-							onClick={() => window.location.reload()}
-						>
+            <div
+              className="flex justify-between items-center p-2 hover:bg-secondary cursor-pointer"
+              onClick={() => window.location.reload()}
+            >
               <div className="flex items-center gap-1">
                 <UserPlus size={16} />
                 <span className="text-sm">Create contact</span>
@@ -101,11 +103,13 @@ const Settings = () => {
                 <VolumeOff size={16} />
                 <span className="text-sm">Mute</span>
               </div>
-             <Switch
-								checked={!session?.currentUser?.muted}
-								onCheckedChange={() => mutate({ muted: !session?.currentUser?.muted })}
-								disabled={isPending}
-							/>
+              <Switch
+                checked={!session?.currentUser?.muted}
+                onCheckedChange={() =>
+                  mutate({ muted: !session?.currentUser?.muted })
+                }
+                disabled={isPending}
+              />
             </div>
 
             <div className="flex justify-between items-center p-2 hover:bg-secondary">
@@ -126,7 +130,10 @@ const Settings = () => {
                 }
               />
             </div>
-              <div className='flex justify-between items-center bg-destructive p-2 cursor-pointer' onClick={() => signOut()}>
+            <div
+              className="flex justify-between items-center bg-destructive p-2 cursor-pointer"
+              onClick={() => signOut()}
+            >
               <div className="flex items-center gap-1">
                 <LogIn size={16} />
                 <span className="text-sm">Logout</span>
@@ -137,7 +144,7 @@ const Settings = () => {
       </Popover>
 
       <Sheet open={isProfileOpen} onOpenChange={setIsProfileOpen}>
-        <SheetContent side={"left"} className="w-80 p-2">
+        <SheetContent side={"left"} className="w-80 p-2 max-md:w-full">
           <>
             <SheetHeader>
               <SheetTitle className="text-2xl">My profile</SheetTitle>
@@ -150,23 +157,30 @@ const Settings = () => {
               <Separator />
             </div>
 
-            <div className="mx-auto w-1/2 h-36 relative">
+            <div className="mx-auto w-1/2 max-md:w-2/5 h-36 relative">
               <Avatar className="w-full h-36">
-                <AvatarImage src={session?.currentUser?.avatar} alt={session?.currentUser?.email} className='object-cover' />
+                <AvatarImage
+                  src={session?.currentUser?.avatar}
+                  alt={session?.currentUser?.email}
+                  className="object-cover"
+                />
                 <AvatarFallback className="text-6xl uppercase font-spaceGrotesk">
-                  SB
+                  {session?.currentUser?.email.charAt(0)}
                 </AvatarFallback>
               </Avatar>
-             <UploadButton
-							endpoint='imageUploader'
-              onClientUploadComplete={(res: Array<{ url: string }>) => {
-                mutate({ avatar: res[0].url })
-              }}
-							config={{ appendOnPaste: true, mode: 'auto' }}
-							className='absolute right-0 bottom-0'
-							appearance={{ allowedContent: { display: 'none' }, button: { width: 40, height: 40, borderRadius: '100%' } }}
-							content={{ button: <Upload size={16} /> }}
-						/>
+              <UploadButton
+                endpoint="imageUploader"
+                onClientUploadComplete={(res: Array<{ url: string }>) => {
+                  mutate({ avatar: res[0].url });
+                }}
+                config={{ appendOnPaste: true, mode: "auto" }}
+                className="absolute right-0 bottom-0"
+                appearance={{
+                  allowedContent: { display: "none" },
+                  button: { width: 40, height: 40, borderRadius: "100%" },
+                }}
+                content={{ button: <Upload size={16} /> }}
+              />
             </div>
 
             <Accordion type="single" collapsible className="mt-4">
@@ -216,6 +230,6 @@ const Settings = () => {
 export default Settings;
 
 interface IPayload {
-	muted?: boolean
-	avatar?: string
+  muted?: boolean;
+  avatar?: string;
 }

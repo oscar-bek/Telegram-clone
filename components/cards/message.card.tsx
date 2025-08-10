@@ -29,13 +29,13 @@ const MessageCard: FC<Props> = ({ message, onReaction, onDeleteMessage }) => {
 				<div
 					className={cn(
 						'm-2.5 font-medium text-xs flex',
-						message.receiver._id === currentContact?._id ? 'justify-start' : 'justify-end'
+						message.receiver._id === currentContact?._id ? 'justify-end' : 'justify-start'
 					)}
 				>
 					<div
 						className={cn(
 							'relative inline p-2 pl-2.5 pr-12 max-w-full',
-							message.receiver._id === currentContact?._id ? 'bg-primary' : 'bg-secondary'
+							message.receiver._id === currentContact?._id ? 'bg-secondary' : 'bg-primary'
 						)}
 					>
 					{message.image && <Image src={message.image} alt={message.image} width={200} height={150} />}

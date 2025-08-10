@@ -5,7 +5,7 @@ import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { messageSchema } from "@/lib/validation";
 import { Paperclip, Send, Smile } from "lucide-react";
-import { ChangeEvent, FC, useEffect, useRef, useState } from 'react'
+import { ChangeEvent, FC, useEffect, useRef, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import emojies from "@emoji-mart/data";
@@ -20,24 +20,38 @@ import { useLoading } from "@/hooks/use-loading";
 import { IMessage } from "@/types";
 import { useSession } from "next-auth/react";
 import { useCurrentContact } from "@/hooks/use-current";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { UploadDropzone } from '@/lib/uploadthing'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { UploadDropzone } from "@/lib/uploadthing";
 
 interface Props {
- onSubmitMessage: (values: z.infer<typeof messageSchema>) => Promise<void>
-	onReadMessages: () => Promise<void>
-	onReaction: (reaction: string, messageId: string) => Promise<void>
-	onDeleteMessage: (messageId: string) => Promise<void>
+  onSubmitMessage: (values: z.infer<typeof messageSchema>) => Promise<void>;
+  onReadMessages: () => Promise<void>;
+  onReaction: (reaction: string, messageId: string) => Promise<void>;
+  onDeleteMessage: (messageId: string) => Promise<void>;
   messageForm: UseFormReturn<z.infer<typeof messageSchema>>;
   messages: IMessage[];
-  onTyping: (e: ChangeEvent<HTMLInputElement>) => void
+  onTyping: (e: ChangeEvent<HTMLInputElement>) => void;
 }
 
-const Chat: FC<Props> = ({ onSubmitMessage, messageForm, messages, onReadMessages, onReaction, onDeleteMessage, onTyping }) => {
-	const [open, setOpen] = useState(false)
+const Chat: FC<Props> = ({
+  onSubmitMessage,
+  messageForm,
+  messages,
+  onReadMessages,
+  onReaction,
+  onDeleteMessage,
+  onTyping,
+}) => {
+  const [open, setOpen] = useState(false);
 
   const { loadMessages } = useLoading();
-const { editedMessage, setEditedMessage } = useCurrentContact();
+  const { editedMessage, setEditedMessage } = useCurrentContact();
   const { data: session } = useSession();
   const { currentContact } = useCurrentContact();
   const { resolvedTheme } = useTheme();
@@ -46,27 +60,21 @@ const { editedMessage, setEditedMessage } = useCurrentContact();
   const scrollRef = useRef<HTMLFormElement | null>(null);
   const prevContactIdRef = useRef<string | null>(null);
 
-  // Just current user and current contact's messages filtering
-  const filteredMessages = messages.filter((message) => {
-    const currentUserId = session?.currentUser?._id;
-    const contactId = currentContact?._id;
-
-    // Check if the message is between current user and current contact
-    const isRelevantMessage =
-      (message.sender._id === currentUserId &&
-        message.receiver._id === contactId) ||
-      (message.sender._id === contactId &&
-        message.receiver._id === currentUserId);
-
-    return isRelevantMessage;
-  });
+  const filteredMessages = messages.filter(
+    (message, index, self) =>
+      ((message.sender._id === session?.currentUser?._id &&
+        message.receiver._id === currentContact?._id) ||
+        (message.sender._id === currentContact?._id &&
+          message.receiver._id === session?.currentUser?._id)) &&
+      index === self.findIndex((m) => m._id === message._id)
+  );
 
   useEffect(() => {
-		if (editedMessage) {
-			messageForm.setValue('text', editedMessage.text)
-			scrollRef.current?.scrollIntoView({ behavior: 'smooth' })
-		}
-	}, [editedMessage])
+    if (editedMessage) {
+      messageForm.setValue("text", editedMessage.text);
+      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [editedMessage]);
 
   // FIXED: UseEffect for scrolling and message input
   useEffect(() => {
@@ -77,10 +85,11 @@ const { editedMessage, setEditedMessage } = useCurrentContact();
   useEffect(() => {
     const currentContactId = currentContact?._id;
     // Contact is updated or new messages arrive
-    if (currentContactId && (
-      prevContactIdRef.current !== currentContactId || // Contact is updated
-      filteredMessages.length > 0 // New messages are available
-    )) {
+    if (
+      currentContactId &&
+      (prevContactIdRef.current !== currentContactId || // Contact is updated
+        filteredMessages.length > 0) // New messages are available
+    ) {
       onReadMessages();
       prevContactIdRef.current = currentContactId;
     }
@@ -110,19 +119,27 @@ const { editedMessage, setEditedMessage } = useCurrentContact();
   };
 
   return (
-    <div className='flex flex-col justify-end z-40 min-h-[92vh] sidebar-custom-scrollbar overflow-y-scroll'>
+    <div className="flex flex-col justify-end z-40 min-h-[92vh] sidebar-custom-scrollbar overflow-y-scroll">
       {/* Loading */}
       {loadMessages && <ChatLoading />}
 
       {/* Messages - just filtered messages*/}
-      {filteredMessages.map((message) => (
-       <MessageCard key={message._id} message={message} onReaction={onReaction} onDeleteMessage={onDeleteMessage} />
+      {filteredMessages.map((message, index) => (
+        <MessageCard
+          key={index}
+          message={message}
+          onReaction={onReaction}
+          onDeleteMessage={onDeleteMessage}
+        />
       ))}
 
       {/* Start conversation */}
       {filteredMessages.length === 0 && (
         <div className="w-full h-[88vh] flex items-center justify-center">
-         <div className='text-[100px] cursor-pointer' onClick={() => onSubmitMessage({ text: '✋' })}>
+          <div
+            className="text-[100px] cursor-pointer"
+            onClick={() => onSubmitMessage({ text: "✋" })}
+          >
             ✋
           </div>
         </div>
@@ -135,26 +152,26 @@ const { editedMessage, setEditedMessage } = useCurrentContact();
           className="w-full flex relative"
           ref={scrollRef}
         >
-         <Dialog open={open} onOpenChange={setOpen}>
-						<DialogTrigger asChild>
-							<Button size={'icon'} type='button' variant={'secondary'}>
-								<Paperclip />
-							</Button>
-						</DialogTrigger>
-						<DialogContent>
-							<DialogHeader>
-								<DialogTitle />
-							</DialogHeader>
-							<UploadDropzone
-								endpoint={'imageUploader'}
-								onClientUploadComplete={res => {
-									onSubmitMessage({ text: '', image: res[0].url })
-									setOpen(false)
-								}}
-								config={{ appendOnPaste: true, mode: 'auto' }}
-							/>
-						</DialogContent>
-					</Dialog>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button size={"icon"} type="button" variant={"secondary"}>
+                <Paperclip />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle />
+              </DialogHeader>
+              <UploadDropzone
+                endpoint={"imageUploader"}
+                onClientUploadComplete={(res) => {
+                  onSubmitMessage({ text: "", image: res[0].url });
+                  setOpen(false);
+                }}
+                config={{ appendOnPaste: true, mode: "auto" }}
+              />
+            </DialogContent>
+          </Dialog>
 
           <FormField
             control={messageForm.control}
@@ -167,11 +184,11 @@ const { editedMessage, setEditedMessage } = useCurrentContact();
                     placeholder="Type a message"
                     value={field.value}
                     onBlur={() => field.onBlur()}
-                   onChange={e => {
-											field.onChange(e.target.value)
-											onTyping(e)
-											if (e.target.value === '') setEditedMessage(null)
-										}}
+                    onChange={(e) => {
+                      field.onChange(e.target.value);
+                      onTyping(e);
+                      if (e.target.value === "") setEditedMessage(null);
+                    }}
                     ref={inputRef}
                   />
                 </FormControl>
