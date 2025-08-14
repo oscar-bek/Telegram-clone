@@ -26,6 +26,19 @@ const HomePage = () => {
   const [contacts, setContacts] = useState<IUser[]>([]);
   const [messages, setMessages] = useState<IMessage[]>([]);
 
+  // Helper function to get display name
+  const getDisplayName = (user: IUser) => {
+    if (user.firstName && user.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    } else if (user.firstName) {
+      return user.firstName;
+    } else if (user.lastName) {
+      return user.lastName;
+    } else {
+      return user.email;
+    }
+  };
+
   const { setCreating, setLoading, isLoading, setLoadMessages, setTyping } =
     useLoading();
   const { currentContact, editedMessage, setEditedMessage } =
@@ -95,7 +108,7 @@ const HomePage = () => {
   };
 
   useEffect(() => {
-    socket.current = io("ws://localhost:5000");
+    socket.current = io("ws://localhost:3001");
   }, []);
 
   useEffect(() => {
@@ -117,6 +130,14 @@ const HomePage = () => {
         setContacts((prev) => {
           const isExist = prev.some((item) => item._id === user._id);
           return isExist ? prev : [...prev, user];
+        });
+
+        // Show notification when someone adds you as a contact
+        const userName = getDisplayName(user);
+        toast({
+          title: "New Contact",
+          description: `${userName} added you as a contact`,
+          duration: 4000,
         });
       });
 
@@ -147,6 +168,33 @@ const HomePage = () => {
           if (!receiver.muted) {
             playSound(receiver.notificationSound);
           }
+
+          // Show notification popup when message is received
+          if (!currentContact?._id) {
+            // User is not currently chatting with anyone
+            const senderName = getDisplayName(sender);
+            toast({
+              title: "New Message",
+              description: `${senderName} sent you a message`,
+              duration: 5000,
+            });
+          } else if (currentContact?._id !== newMessage.sender._id) {
+            // User is chatting with someone else
+            const senderName = getDisplayName(sender);
+            toast({
+              title: "New Message",
+              description: `${senderName} sent you a message`,
+              duration: 5000,
+            });
+          } else if (currentContact?._id === newMessage.sender._id) {
+            // If user is currently chatting with sender, show a subtle notification
+            const senderName = getDisplayName(sender);
+            toast({
+              title: "Message Received",
+              description: `Message from ${senderName}`,
+              duration: 3000,
+            });
+          }
         }
       );
 
@@ -157,6 +205,16 @@ const HomePage = () => {
             return message ? { ...item, status: CONST.READ } : item;
           });
         });
+
+        // Show notification when messages are read
+        if (messages.length > 0 && currentContact?._id === messages[0]?.sender._id) {
+          const contactName = getDisplayName(currentContact);
+          toast({
+            title: "Message Read",
+            description: `${contactName} read your message`,
+            duration: 2000,
+          });
+        }
       });
 
       socket.current?.on(
@@ -212,6 +270,16 @@ const HomePage = () => {
                 : item
             )
           );
+
+          // Show notification when message is deleted
+          if (currentContact?._id !== sender._id) {
+            const senderName = getDisplayName(sender);
+            toast({
+              title: "Message Deleted",
+              description: `${senderName} deleted a message`,
+              duration: 3000,
+            });
+          }
         }
       );
 
@@ -247,7 +315,7 @@ const HomePage = () => {
       });
       toast({ description: "Contact added successfully" });
       contactForm.reset();
-    } catch (error: unknown) {
+    } catch (error: any) {
       if ((error as IError).response?.data?.message) {
         return toast({
           description: (error as IError).response.data.message,
