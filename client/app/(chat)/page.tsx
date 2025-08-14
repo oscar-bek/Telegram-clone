@@ -107,22 +107,19 @@ const HomePage = () => {
     }
   };
 
-  useEffect(() => {
-    socket.current = io("ws://localhost:3001");
-  }, []);
+ useEffect(() => {
+		socket.current = io('ws://localhost:5000')
+	}, [])
 
-  useEffect(() => {
-    if (session?.currentUser?._id) {
-      socket.current?.emit("addOnlineUser", session.currentUser);
-      socket.current?.on(
-        "getOnlineUsers",
-        (data: { socketId: string; user: IUser }[]) => {
-          setOnlineUsers(data.map((item) => item.user));
-        }
-      );
-      getContacts();
-    }
-  }, [session?.currentUser]);
+	useEffect(() => {
+		if (session?.currentUser?._id) {
+			socket.current?.emit('addOnlineUser', session.currentUser)
+			socket.current?.on('getOnlineUsers', (data: { socketId: string; user: IUser }[]) => {
+				setOnlineUsers(data.map(item => item.user))
+			})
+			getContacts()
+		}
+	}, [session?.currentUser])
 
   useEffect(() => {
     if (session?.currentUser) {
@@ -315,7 +312,7 @@ const HomePage = () => {
       });
       toast({ description: "Contact added successfully" });
       contactForm.reset();
-    } catch (error: any) {
+    } catch (error: unknown) {
       if ((error as IError).response?.data?.message) {
         return toast({
           description: (error as IError).response.data.message,

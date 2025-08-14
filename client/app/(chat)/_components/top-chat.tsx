@@ -7,7 +7,7 @@ import { useCurrentContact } from '@/hooks/use-current'
 import { useLoading } from '@/hooks/use-loading'
 import { sliceText } from '@/lib/utils'
 import { IMessage } from '@/types'
-import { Settings2 } from 'lucide-react'
+import { Settings2, Phone } from 'lucide-react'
 import Image from 'next/image'
 import { FC } from 'react'
 
@@ -72,12 +72,15 @@ const TopChat: FC<Props> = ({ messages }) => {
 				</div>
 			</div>
 
-			<Sheet>
-				<SheetTrigger asChild>
-					<Button size={'icon'} variant={'secondary'}>
-						<Settings2 />
-					</Button>
-				</SheetTrigger>
+			<div className='flex items-center gap-2'>
+				
+				{/* Settings Button */}
+				<Sheet>
+					<SheetTrigger asChild>
+						<Button size={'icon'} variant={'secondary'}>
+							<Settings2 />
+						</Button>
+					</SheetTrigger>
 				<SheetContent className='w-80 max-md:w-full p-2 overflow-y-scroll sidebar-custom-scrollbar'>
 					<SheetHeader>
 						<SheetTitle />
@@ -122,13 +125,14 @@ const TopChat: FC<Props> = ({ messages }) => {
 								.filter(msg => msg.image)
 								.map(msg => (
 									<div className='w-full h-36 relative' key={msg._id}>
-										<Image src={msg.image} alt={msg._id} fill className='object-cover rounded-md' />
+										<Image src={msg.image} alt={msg._id} fill className='object-edit' />
 									</div>
 								))}
 						</div>
 					</div>
 				</SheetContent>
 			</Sheet>
+			</div>
 		</div>
 	)
 }

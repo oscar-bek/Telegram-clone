@@ -1,4 +1,4 @@
-const io = require("socket.io")(3001, {
+const io = require("socket.io")(5000, {
   cors: { origin: "*", methods: ["GET", "POST"] },
 });
 
@@ -194,48 +194,24 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("callEnded", ({ callId, userId, otherUserId }) => {
-    console.log("Call ended:", { callId, userId, otherUserId });
+  socket.on("callEnded", () => {
+    console.log("📞 Call ended by user:", socket.id);
     
-    // Find the call
-    const call = activeCalls.get(callId);
-    if (call) {
-      
-      
-      // Determine who ended the call and notify the other user
-      const callerSocketId = getSocketId(call.caller._id);
-      const receiverSocketId = getSocketId(call.receiver._id);
-      
-      // Notify both users about the call ending
-      if (callerSocketId && callerSocketId !== socket.id) {
-        socket.to(callerSocketId).emit("callEnded", { 
-          callId, 
-          userId,
-          reason: "Call ended by other user"
-        });
-      }
-      
-      if (receiverSocketId && receiverSocketId !== socket.id) {
-        socket.to(receiverSocketId).emit("callEnded", { 
-          callId, 
-          userId,
-          reason: "Call ended by other user"
-        });
-      }
-      
-      // Remove the call from active calls
-      activeCalls.delete(callId);
-    } else {
-      // If call not found, try to notify the other user directly
-      if (otherUserId) {
+    // Find all calls involving this user
+    for (const [callId, call] of activeCalls.entries()) {
+      if (call.caller._id === socket.id || call.receiver._id === socket.id) {
+        const otherUserId = call.caller._id === socket.id ? call.receiver._id : call.caller._id;
         const otherUserSocketId = getSocketId(otherUserId);
-        if (otherUserSocketId && otherUserSocketId !== socket.id) {
+        
+        if (otherUserSocketId) {
           socket.to(otherUserSocketId).emit("callEnded", { 
-            callId: "unknown", 
-            userId,
-            reason: "Call cancelled"
+            callId, 
+            reason: "Call ended by other user"
           });
         }
+        
+        activeCalls.delete(callId);
+        break;
       }
     }
   });
